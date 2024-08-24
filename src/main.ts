@@ -65,54 +65,54 @@ class RachioSmartHoseTimerPlugin extends ScryptedDeviceBase implements DevicePro
     
     async getRachioValves() {
         this.console.log("Preparing to get a list of Rachio Valves");
-
+    
         // If there's no api-key, no need to continue
         if (this.isNullOrEmpty(this.getApiKey())) {
-            this.console.log("Please enter your API key.")
+            this.console.log("Please enter your API key.");
             return;
         }
-
+    
         // Get the user's ID
-        var userId = await this.getRachioUser()
+        const userId = await this.getRachioUser();
         if (this.isNullOrEmpty(userId)) {
             this.console.log("Failed to get Rachio user");
             return;
         } else {
             this.storage.setItem('rachio-user', userId);
         }
-
+    
         // Get a list of base stations for the user
-        var baseStations = await this.getRachioBaseStations(userId)
+        const baseStations = await this.getRachioBaseStations(userId);
         if (this.isNullOrEmpty(baseStations)) {
             this.console.log("Failed to get Rachio Base Stations");
             return;
         }
-
-        // Loop through our base stations and get a list of valves
-        var valves: Array<any> = [];
-        baseStations.forEach(async station => {
+    
+        // Use Promise.all to wait for all valve fetching operations to complete
+        const valvePromises = baseStations.map<Promise<Array<any>>>(async station => {
             this.console.log(`Getting valves for Base Station ${station.serialNumber}`);
-            var stationValves = await this.getBaseStationValves(station.id);
+            const stationValves = await this.getBaseStationValves(station.id);
             this.console.log(`Found ${stationValves.length} valves for Base Station ${station.serialNumber}`);
-            valves.push(stationValves)
+            return stationValves;
         });
-
-        this.console.log(`Found ${valves.length} valves`)
-
+    
+        const valvesArrays = await Promise.all(valvePromises);
+        const valves = valvesArrays.flat();
+    
+        this.console.log(`Found ${valves.length} valves total`);
+    
         // Create a new Irrigation object for each valve we found
-        var irrigationDevices: Array<any> = [];
-        valves.forEach(valve => {
-            irrigationDevices.push({
+        const irrigationDevices = valves.map(valve => {
+            this.console.log(`Adding valve: ${valve.name}`);
+            return {
                 nativeId: valve.id,
                 name: valve.name,
                 type: ScryptedDeviceType.Irrigation,
-                interfaces: [
-                    ScryptedInterface.OnOff
-                ]
-            });
-        })
-
-        if (irrigationDevices) {
+                interfaces: [ScryptedInterface.OnOff]
+            };
+        });
+    
+        if (irrigationDevices.length > 0) {
             await sdk.deviceManager.onDevicesChanged({
                 devices: irrigationDevices
             });

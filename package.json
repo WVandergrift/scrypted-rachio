@@ -1,7 +1,7 @@
 {
    "name": "@wvandergrift/rachio-smart-hose-timer",
-   "version": "0.0.1",
-   "description": "Rachio Smart Host Timer Plugin",
+   "version": "0.0.2",
+   "description": "Rachio Smart Hose Timer Plugin",
    "author": "Will Vandergrift",
    "license": "Apache",
    "scripts": {
@@ -28,7 +28,7 @@
    "url": "https://github.com/WVandergrift/scrypted-rachio"
    },
    "scrypted": {
-      "name": "Rachio Smart Host Timer Plugin",
+      "name": "Rachio Smart Hose Timer Plugin",
       "type": "DeviceProvider",
       "interfaces": [
          "DeviceProvider",
